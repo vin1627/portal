@@ -1,0 +1,110 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require("../app");
+var debug = require("debug")("webportal-api:server");
+var http = require("http");
+var spdy = require("spdy")
+var fs = require("fs");
+require("dotenv").config();
+/**
+ * Get port from environment and store in Express.
+ */
+
+var httpport = normalizePort(process.env.HTTP_APP_PORT || "5000");
+var httpsport = normalizePort(process.env.HTTPS_APP_PORT || "5100");
+
+app.set("port", httpport);
+
+/**
+ * Get the Certificate and key from https folder.
+ */
+var options = {
+  // Private key
+  key: fs.readFileSync(__dirname + '/../https/key.pem'),
+ 
+  // Certificate
+  cert: fs.readFileSync(__dirname + '/../https/cert.pem')
+}
+
+
+/**
+ * Create HTTP and HTTPS server.
+ */
+var httpserver = http.createServer(app);
+var httpsserver = spdy.createServer(options,app);
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+httpserver.listen(httpport, () => {
+  debug("listening in port :", httpport);
+});
+httpserver.on("error", onError);
+// httpserver.on("listening", onListening);
+
+
+httpsserver.listen(httpsport, ()=>{
+  debug("listenong to port ", httpsport)
+})
+httpsserver.on("error", onError);
+/**
+ * Normalize a port into a number, string, or false.
+ */
+function normalizePort(val) {
+  var portVal = parseInt(val, 10);
+
+  if (isNaN(portVal)) {
+    // named pipe
+    return val;
+  }
+
+  if (portVal >= 0) {
+    // port number
+    return portVal;
+  }
+
+  return false;
+}
+
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== "listen") {
+    throw error;
+  }
+
+  var bind = typeof httpport === "string" ? "Pipe " + httpport : "Port " + httpport;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case "EACCES":
+      debug(bind + " requires elevated privileges");
+      process.exit(1);
+      break;
+    case "EADDRINUSE":
+      debug(bind + " is already in use");
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = httpserver.address();
+  var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+  debug("Listening on " + bind);
+}
+
+module.exports = app;

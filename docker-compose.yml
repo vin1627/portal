@@ -1,0 +1,27 @@
+version: '3.6'
+
+services:
+
+  tgo-apdmanila-webportal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tgo-apdmanila-webportal
+    working_dir: /code
+    volumes:
+      - .:/code
+      - /code/node_modules
+    ports:
+      - 8081:80
+      - 9001:9000
+  tgo-mongo-dbase:
+    container_name: tgo-mongo-dbase
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    image: mongo:latest
+    ports: 
+      - '27017:27017'
+    volumes:
+      - /data/mongodb/db:/data/db
+    
